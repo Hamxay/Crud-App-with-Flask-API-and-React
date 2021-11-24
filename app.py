@@ -32,15 +32,15 @@ def Index():
  
     return Response('All Data')
  
-#this route is for inserting data to mysql database via html forms
+#this route is for inserting data to mysql database via html jsons
 @app.route('/insert', methods = ['POST'])
 def insert():
  
     if request.method == 'POST':
- 
-        name = request.form['name']
-        email = request.form['email']
-        phone = request.form['phone']
+        # print(request.json)
+        name = request.json['name']
+        email = request.json['email']
+        phone = request.json['phone']
  
  
         my_data = Data(name, email, phone)
@@ -49,28 +49,26 @@ def insert():
  
         flash("Employee Inserted Successfully")
  
-        return Response('Added Sucessfull')
+    return Response('Added Sucessfull')
  
  
 #this is our update route where we are going to update our employee
-@app.route('/update', methods = ['GET', 'POST'])
+@app.route('/update', methods = ['POST'])
 def update():
+    my_data = Data.query.get(request.json['id'])
+
+    my_data.name = request.json['name']
+    my_data.email = request.json['email']
+    my_data.phone = request.json['phone']
+
+    db.session.commit()
+    flash("Employee Updated Successfully")
  
-    if request.method == 'POST':
-        my_data = Data.query.get(request.form.get('id'))
- 
-        my_data.name = request.form['name']
-        my_data.email = request.form['email']
-        my_data.phone = request.form['phone']
- 
-        db.session.commit()
-        flash("Employee Updated Successfully")
- 
-        return Response("Updated successfully")
+    return Response("Updated successfully")
  
  
-#This route is for deleting our employee
-@app.route('/delete/<id>/', methods = ['GET', 'POST'])
+#This route is for deleting our employee~
+@app.route('/delete/<id>/', methods = ['GET'])
 def delete(id):
     my_data = Data.query.get(id)
     db.session.delete(my_data)
