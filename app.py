@@ -1,7 +1,9 @@
-from flask import Flask, Response, request, flash
+from flask import Flask, Response, request, flash, make_response
+from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
  
 app = Flask(__name__)
+CORS(app)
 app.secret_key = "Secret Key"
  
 #SqlAlchemy Database Configuration With Mysql
@@ -23,21 +25,34 @@ class Data(db.Model):
         self.name = name
         self.email = email
         self.phone = phone
+    
+    def to_dict(self):
+        return {
+            'id' : self.id,
+            "name": self.name,
+            "email": self.email,
+            "phone": self.phone
+        }
 
 #This is the index route where we are going to
 #query on all our employee data
 @app.route('/')
 def Index():
     all_data = Data.query.all()
- 
-    return Response('All Data')
+    resp = []
+    for data in all_data:
+        resp.append(data.to_dict())
+
+    print("res", resp)
+    
+    return make_response({"message": "Success", "data": resp}) 
  
 #this route is for inserting data to mysql database via html jsons
 @app.route('/insert', methods = ['POST'])
 def insert():
- 
+    # print(request.json)
     if request.method == 'POST':
-        # print(request.json)
+        
         name = request.json['name']
         email = request.json['email']
         phone = request.json['phone']
@@ -46,11 +61,16 @@ def insert():
         my_data = Data(name, email, phone)
         db.session.add(my_data)
         db.session.commit()
- 
-        flash("Employee Inserted Successfully")
- 
-    return Response('Added Sucessfull')
- 
+        # inserted_data = my_data.to_dict()
+        all_data = Data.query.all()
+        resp = []
+        for data in all_data:
+            resp.append(data.to_dict())
+
+        # print("res", resp)
+    
+    return make_response({"message": "Success", "data": resp}) 
+        # return make_response({"message": "Success", "data":inserted_data })
  
 #this is our update route where we are going to update our employee
 @app.route('/update', methods = ['POST'])
@@ -70,12 +90,17 @@ def update():
 #This route is for deleting our employee~
 @app.route('/delete/<id>/', methods = ['GET'])
 def delete(id):
-    my_data = Data.query.get(id)
+    my_data = Data.query.get(int(id))
     db.session.delete(my_data)
     db.session.commit()
-    flash("Employee Deleted Successfully")
- 
-    return Response('Deleted successfully')
+    all_data = Data.query.all()
+    resp = []
+    for data in all_data:
+        resp.append(data.to_dict())
+
+    print("res", resp)
+    
+    return make_response({"message": "Success", "data": resp}) 
 
 if __name__ == "__main__":
     app.run(debug=True)
